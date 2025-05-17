@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.first_name }} {{ student.last_name }} - Pažymiai{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-2">{{ student.first_name }} {{ student.last_name }}</h1>
+            <h5 class="text-muted">{{ module.name }}</h5>
+        </div>
+        <a href="{{ url_for('teacher.module_students', module_id=module.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Grįžti į studentų sąrašą
+        </a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Vertinimai ir pažymiai</h5>
+            <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addGradeModal">
+                <i class="fas fa-plus"></i> Pridėti pažymį
+            </button>
+        </div>
+        <div class="card-body">
+            {% if assessments %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Vertinimas</th>
+                            <th>Data</th>
+                            <th>Pažymys</th>
+                            <th>Veiksmai</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assessment in assessments %}
+                        <tr>
+                            <td>{{ assessment.title }}</td>
+                            <td>{{ assessment.date.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                {% if grades[assessment.id] %}
+                                    <span class="badge bg-success">{{ grades[assessment.id].value }}</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Neįvertinta</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if grades[assessment.id] %}
+                                <button type="button" 
+                                        class="btn btn-primary btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editGradeModal{{ assessment.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-danger btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteGradeModal{{ assessment.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% else %}
+                                <button type="button"
+                                        class="btn btn-success btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#addGradeModal{{ assessment.id }}">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        {% if grades[assessment.id] %}
+                        <!-- Edit Grade Modal -->
+                        <div class="modal fade" id="editGradeModal{{ assessment.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Redaguoti pažymį - {{ assessment.title }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('teacher.update_grade', grade_id=grades[assessment.id].id) }}">
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label for="grade{{ assessment.id }}" class="form-label">Pažymys</label>
+                                                <input type="number" class="form-control" id="grade{{ assessment.id }}" 
+                                                       name="grade" min="1" max="10" step="1" 
+                                                       value="{{ grades[assessment.id].value }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Atšaukti</button>
+                                            <button type="submit" class="btn btn-primary">Išsaugoti</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delete Grade Modal -->
+                        <div class="modal fade" id="deleteGradeModal{{ assessment.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Ištrinti pažymį</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Ar tikrai norite ištrinti šį pažymį?</p>
+                                        <p><strong>Vertinimas:</strong> {{ assessment.title }}</p>
+                                        <p><strong>Pažymys:</strong> {{ grades[assessment.id].value }}</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <form method="POST" action="{{ url_for('teacher.delete_grade', grade_id=grades[assessment.id].id) }}">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Atšaukti</button>
+                                            <button type="submit" class="btn btn-danger">Ištrinti</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <!-- Add Grade Modal -->
+                        <div class="modal fade" id="addGradeModal{{ assessment.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Pridėti pažymį - {{ assessment.title }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('teacher.add_grade', assessment_id=assessment.id, student_id=student.id) }}">
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label for="newGrade{{ assessment.id }}" class="form-label">Pažymys</label>
+                                                <input type="number" class="form-control" id="newGrade{{ assessment.id }}" 
+                                                       name="grade" min="1" max="10" step="1" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Atšaukti</button>
+                                            <button type="submit" class="btn btn-success">Pridėti</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info mb-0">
+                Šiame modulyje nėra sukurtų vertinimų.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ title }}</h1>
+
+            {% if not assessments_by_module %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Kol kas neturite jokių vertinimų.
+            </div>
+            {% else %}
+                {% for module_name, assessments in assessments_by_module.items() %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{{ module_name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Vertinimas</th>
+                                        <th>Tipas</th>
+                                        <th>Terminas</th>
+                                        <th>Svoris</th>
+                                        <th>Būsena</th>
+                                        <th>Pažymys</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for assessment in assessments %}
+                                    <tr>
+                                        <td>
+                                            <div>
+                                                <strong>{{ assessment.title }}</strong>
+                                                {% if assessment.description %}
+                                                <div class="small text-muted">{{ assessment.description }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">
+                                                {% if assessment.type == 'exam' %}
+                                                Egzaminas
+                                                {% elif assessment.type == 'test' %}
+                                                Kontrolinis
+                                                {% elif assessment.type == 'homework' %}
+                                                Namų darbas
+                                                {% elif assessment.type == 'project' %}
+                                                Projektas
+                                                {% else %}
+                                                {{ assessment.type }}
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div>{{ assessment.due_date.strftime('%Y-%m-%d') }}</div>
+                                            <small class="text-muted">{{ assessment.due_date.strftime('%H:%M') }}</small>
+                                        </td>
+                                        <td>{{ assessment.weight }}%</td>
+                                        <td>
+                                            {% if assessment.grade is not none %}
+                                            <span class="badge bg-success">Įvertinta</span>
+                                            {% elif assessment.submission %}
+                                            <span class="badge bg-primary">Pateikta</span>
+                                            {% elif assessment.is_past_due %}
+                                            <span class="badge bg-danger">Terminas praėjo</span>
+                                            {% else %}
+                                            <span class="badge bg-warning text-dark">Laukiama</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if assessment.grade is not none %}
+                                            <span class="badge {% if assessment.grade >= 5 %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ "%.2f"|format(assessment.grade) }}
+                                            </span>
+                                            {% if assessment.feedback %}
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-link" 
+                                                    data-bs-toggle="tooltip" 
+                                                    title="{{ assessment.feedback }}">
+                                                <i class="fas fa-comment-dots"></i>
+                                            </button>
+                                            {% endif %}
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %} 

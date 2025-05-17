@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}{{ module.name }} - Studentai{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>{{ module.name }} - Studentų sąrašas</h2>
+            <p class="text-muted">{{ module.study_program.name }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('teacher.modules') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Grįžti
+            </a>
+            <a href="{{ url_for('teacher.module_assessments', module_id=module.id) }}" class="btn btn-primary">
+                <i class="fas fa-chart-bar"></i> Vertinimai
+            </a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th rowspan="2" class="align-middle">Studentas</th>
+                            <th rowspan="2" class="align-middle">Grupė</th>
+                            <th colspan="{{ lectures|length if lectures else 1 }}" class="text-center">Lankomumas</th>
+                            <th colspan="{{ assessments|length if assessments else 1 }}" class="text-center">Vertinimai</th>
+                            <th rowspan="2" class="align-middle text-center">Galutinis balas</th>
+                        </tr>
+                        <tr>
+                            {% if lectures %}
+                                {% for lecture in lectures %}
+                                <th class="text-center">
+                                    <small>{{ lecture.date.strftime('%m-%d') }}</small>
+                                </th>
+                                {% endfor %}
+                            {% else %}
+                                <th class="text-center">Nėra paskaitų</th>
+                            {% endif %}
+
+                            {% if assessments %}
+                                {% for assessment in assessments %}
+                                <th class="text-center">
+                                    <small>{{ assessment.title }}</small>
+                                    <br>
+                                    <small class="text-muted">
+                                        {% if assessment.type == 'lab' %}Lab
+                                        {% elif assessment.type == 'test' %}KD
+                                        {% elif assessment.type == 'exam' %}Egz
+                                        {% else %}{{ assessment.type[:3] }}
+                                        {% endif %}
+                                    </small>
+                                </th>
+                                {% endfor %}
+                            {% else %}
+                                <th class="text-center">Nėra vertinimų</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if students %}
+                            {% for student in students %}
+                            <tr>
+                                <td>{{ student.last_name }} {{ student.first_name }}</td>
+                                <td>{{ student.group.name if student.group else '-' }}</td>
+                                
+                                {% if lectures %}
+                                    {% for lecture in lectures %}
+                                    <td class="text-center">
+                                        {% if lecture.id in student.attendance %}
+                                            {% if student.attendance[lecture.id] %}
+                                                <span class="badge bg-success">+</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">N</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                {% else %}
+                                    <td class="text-center">-</td>
+                                {% endif %}
+
+                                {% if assessments %}
+                                    {% for assessment in assessments %}
+                                    <td class="text-center">
+                                        {% if assessment.id in student.grades %}
+                                            <span class="badge bg-primary">{{ student.grades[assessment.id].points }}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">N</span>
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                {% else %}
+                                    <td class="text-center">-</td>
+                                {% endif %}
+
+                                <td class="text-center">
+                                    {% if student.grades %}
+                                        {% set final_grade = namespace(value=0) %}
+                                        {% set total_weight = namespace(value=0) %}
+                                        {% for assessment in assessments %}
+                                            {% if assessment.id in student.grades %}
+                                                {% set grade = student.grades[assessment.id] %}
+                                                {% set final_grade.value = final_grade.value + (grade.points * assessment.weight_percentage / 100) %}
+                                                {% set total_weight.value = total_weight.value + assessment.weight_percentage %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if total_weight.value > 0 %}
+                                            <span class="badge bg-info">{{ "%.2f"|format(final_grade.value * 100 / total_weight.value) }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="{{ 3 + (lectures|length if lectures else 1) + (assessments|length if assessments else 1) }}" class="text-center">
+                                    Šiame modulyje nėra studentų
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any necessary JavaScript functionality here
+});
+</script>
+
+<style>
+.badge {
+    font-size: 0.9em;
+    padding: 0.4em 0.6em;
+}
+.table th {
+    font-size: 0.9em;
+}
+.table td {
+    vertical-align: middle;
+}
+</style>
+{% endblock %} 

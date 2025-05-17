@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Sukurti grupę{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title mb-0">Sukurti naują grupę</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.create_group') }}">
+                        {{ form.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.year.label(class="form-label") }}
+                            {{ form.year(class="form-control" + (" is-invalid" if form.year.errors else "")) }}
+                            {% if form.year.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.year.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.letter.label(class="form-label") }}
+                            {{ form.letter(class="form-control" + (" is-invalid" if form.letter.errors else "")) }}
+                            {% if form.letter.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.letter.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.study_program.label(class="form-label") }}
+                            {{ form.study_program(class="form-control" + (" is-invalid" if form.study_program.errors else "")) }}
+                            {% if form.study_program.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.study_program.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.groups') }}" class="btn btn-secondary">Atšaukti</a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

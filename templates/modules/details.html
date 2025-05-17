@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}{{ module.name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3>{{ module.name }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Aprašymas</h5>
+                        <p>{{ module.description or 'Aprašymas neįvestas' }}</p>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Pagrindinė informacija</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Studijų programa:</strong> {{ module.study_program.name }}</li>
+                                <li><strong>Kreditai:</strong> {{ module.credits }}</li>
+                                <li><strong>Semestras:</strong> 
+                                    {% if module.semester == 'fall' %}
+                                        Rudens
+                                    {% else %}
+                                        Pavasario
+                                    {% endif %}
+                                </li>
+                                <li><strong>Dėstytojas:</strong> 
+                                    {% if module.teacher %}
+                                        {{ module.teacher.first_name }} {{ module.teacher.last_name }}
+                                    {% else %}
+                                        Nepriskirtas
+                                    {% endif %}
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Išankstiniai reikalavimai</h5>
+                            {% if module.prerequisites %}
+                                <ul>
+                                    {% for prereq in module.prerequisites %}
+                                        <li>{{ prereq.prerequisite.name }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>Nėra išankstinių reikalavimų</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Tvarkaraštis</h5>
+                        {% if module.schedule %}
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>Pradžia</th>
+                                            <th>Pabaiga</th>
+                                            <th>Kabinetas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for schedule in module.schedule %}
+                                            <tr>
+                                                <td>{{ schedule.date.strftime('%Y-%m-%d') }}</td>
+                                                <td>{{ schedule.start_time.strftime('%H:%M') }}</td>
+                                                <td>{{ schedule.end_time.strftime('%H:%M') }}</td>
+                                                <td>{{ schedule.room }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p>Tvarkaraštis dar nėra nustatytas</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Atsiskaitymai</h5>
+                        {% if module.assessments %}
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Pavadinimas</th>
+                                            <th>Aprašymas</th>
+                                            <th>Terminas</th>
+                                            <th>Svoris</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for assessment in module.assessments %}
+                                            <tr>
+                                                <td>{{ assessment.name }}</td>
+                                                <td>{{ assessment.description }}</td>
+                                                <td>{{ assessment.due_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                                <td>{{ assessment.weight }}%</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p>Atsiskaitymų dar nėra</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Veiksmai</h5>
+                </div>
+                <div class="card-body">
+                    {% if current_user.role == 'student' %}
+                        {% if module in current_user.enrolled_modules %}
+                            <a href="#" class="btn btn-danger btn-block mb-2">
+                                Atsisakyti modulio
+                            </a>
+                        {% else %}
+                            <a href="#" class="btn btn-success btn-block mb-2">
+                                Registruotis į modulį
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if current_user.role in ['teacher', 'admin'] %}
+                        <a href="{{ url_for('modules.edit', id=module.id) }}" class="btn btn-warning btn-block mb-2">
+                            <i class="fas fa-edit me-2"></i>Redaguoti modulį
+                        </a>
+                        <a href="{{ url_for('modules.delete', id=module.id) }}" class="btn btn-danger btn-block mb-2" onclick="return confirm('Ar tikrai norite ištrinti šį modulį?')">
+                            <i class="fas fa-trash me-2"></i>Ištrinti modulį
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{{ url_for('main.modules') }}" class="btn btn-secondary btn-block">
+                        <i class="fas fa-arrow-left me-2"></i>Grįžti į modulių sąrašą
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

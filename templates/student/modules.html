@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Moduliai{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Mano moduliai</h1>
+
+            <!-- Enrolled Modules -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Užregistruoti moduliai</h5>
+                </div>
+                <div class="card-body">
+                    {% if enrolled_modules %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Pavadinimas</th>
+                                    <th>Aprašymas</th>
+                                    <th>Kreditai</th>
+                                    <th>Semestras</th>
+                                    <th>Veiksmai</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for module in enrolled_modules %}
+                                <tr>
+                                    <td>{{ module.name }}</td>
+                                    <td>{{ module.description or '-' }}</td>
+                                    <td>{{ module.credits }}</td>
+                                    <td>
+                                        {% if module.semester == 'fall' %}
+                                        Rudens
+                                        {% else %}
+                                        Pavasario
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form action="{{ url_for('student.drop_module', module_id=module.id) }}" 
+                                              method="POST" 
+                                              style="display: inline;"
+                                              onsubmit="return confirm('Ar tikrai norite atsisakyti šio modulio?');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-times"></i> Atsisakyti
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Kol kas nesate užsiregistravę į jokį modulį.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Available Modules -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Galimi moduliai</h5>
+                </div>
+                <div class="card-body">
+                    {% if modules %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Pavadinimas</th>
+                                    <th>Aprašymas</th>
+                                    <th>Kreditai</th>
+                                    <th>Semestras</th>
+                                    <th>Dėstytojas</th>
+                                    <th>Veiksmai</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for module in modules %}
+                                {% if module not in enrolled_modules %}
+                                <tr>
+                                    <td>{{ module.name }}</td>
+                                    <td>{{ module.description or '-' }}</td>
+                                    <td>{{ module.credits }}</td>
+                                    <td>
+                                        {% if module.semester == 'fall' %}
+                                        Rudens
+                                        {% else %}
+                                        Pavasario
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if module.teacher %}
+                                        {{ module.teacher.first_name }} {{ module.teacher.last_name }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <form action="{{ url_for('student.enroll_module', module_id=module.id) }}" 
+                                              method="POST" 
+                                              style="display: inline;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="fas fa-plus"></i> Registruotis
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Nėra galimų modulių.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

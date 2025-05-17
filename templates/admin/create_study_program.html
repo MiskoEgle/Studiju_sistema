@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Nauja Studijų Programa{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Nauja Studijų Programa</h2>
+                    
+                    <form method="POST">
+                        {{ form.csrf_token }}
+                        
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control") }}
+                            {% if form.name.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.code.label(class="form-label") }}
+                            {{ form.code(class="form-control") }}
+                            {% if form.code.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.code.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.faculty_id.label(class="form-label") }}
+                            {{ form.faculty_id(class="form-select") }}
+                            {% if form.faculty_id.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.faculty_id.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Pasirinkite fakultetą, kuriam priklausys programa.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows="4") }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.duration.label(class="form-label") }}
+                            {{ form.duration(class="form-control", type="number") }}
+                            {% if form.duration.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.duration.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Įveskite studijų programos trukmę metais.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.degree.label(class="form-label") }}
+                            {{ form.degree(class="form-select") }}
+                            {% if form.degree.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.degree.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin.study_programs') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Grįžti
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Išsaugoti
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

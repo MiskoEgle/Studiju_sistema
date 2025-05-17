@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Redaguoti Vertinimą{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Redaguoti Vertinimą</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                {{ form.csrf_token }}
+                
+                <div class="mb-3">
+                    {{ form.name.label(class="form-label") }}
+                    {{ form.name(class="form-control") }}
+                    {% if form.name.errors %}
+                        <div class="text-danger">
+                            {% for error in form.name.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.description.label(class="form-label") }}
+                    {{ form.description(class="form-control") }}
+                    {% if form.description.errors %}
+                        <div class="text-danger">
+                            {% for error in form.description.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.due_date.label(class="form-label") }}
+                    {{ form.due_date(class="form-control") }}
+                    {% if form.due_date.errors %}
+                        <div class="text-danger">
+                            {% for error in form.due_date.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form.weight.label(class="form-label") }}
+                    {{ form.weight(class="form-control") }}
+                    {% if form.weight.errors %}
+                        <div class="text-danger">
+                            {% for error in form.weight.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('admin.assessments') }}" class="btn btn-secondary">Atšaukti</a>
+                    <button type="submit" class="btn btn-primary">Išsaugoti</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

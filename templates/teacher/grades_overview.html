@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Pažymių apžvalga{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Pažymių apžvalga</h2>
+        </div>
+    </div>
+
+    {% for module in modules %}
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">{{ module.name }}</h5>
+            <a href="{{ url_for('teacher.module_grades', module_id=module.id) }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-chart-bar"></i> Detali statistika
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Studentas</th>
+                            <th class="text-center">Pažymių vidurkis</th>
+                            <th class="text-center">Įvertintų darbų</th>
+                            <th class="text-center">Lankomumas</th>
+                            <th class="text-center">Vėluojantys darbai</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student_data in module.students_data %}
+                        <tr>
+                            <td>
+                                {{ student_data.student.first_name }} {{ student_data.student.last_name }}
+                            </td>
+                            <td class="text-center">
+                                {% if student_data.average_grade %}
+                                    <span class="badge {% if student_data.average_grade >= 8 %}bg-success{% elif student_data.average_grade >= 5 %}bg-warning{% else %}bg-danger{% endif %} fs-6">
+                                        {{ "%.2f"|format(student_data.average_grade) }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-info fs-6">
+                                    {{ student_data.graded_count }}/{{ student_data.total_assessments }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <div class="progress" style="width: 100px; height: 10px;">
+                                        <div class="progress-bar {% if student_data.attendance_percentage >= 75 %}bg-success{% elif student_data.attendance_percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                             role="progressbar" 
+                                             style="width: {{ student_data.attendance_percentage }}%"
+                                             aria-valuenow="{{ student_data.attendance_percentage }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <span class="ms-2">{{ "%.1f"|format(student_data.attendance_percentage) }}%</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                {% if student_data.overdue_count > 0 %}
+                                    <span class="badge bg-danger fs-6">{{ student_data.overdue_count }}</span>
+                                {% else %}
+                                    <span class="badge bg-success fs-6">0</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %} 

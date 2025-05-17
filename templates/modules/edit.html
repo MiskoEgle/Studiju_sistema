@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Redaguoti Modulį{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Redaguoti Modulį: {{ module.name }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control") }}
+                            {% if form.name.errors %}
+                                {% for error in form.name.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows=4) }}
+                            {% if form.description.errors %}
+                                {% for error in form.description.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.credits.label(class="form-label") }}
+                                {{ form.credits(class="form-control") }}
+                                {% if form.credits.errors %}
+                                    {% for error in form.credits.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.semester.label(class="form-label") }}
+                                {{ form.semester(class="form-select") }}
+                                {% if form.semester.errors %}
+                                    {% for error in form.semester.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.study_program.label(class="form-label") }}
+                            {{ form.study_program(class="form-select") }}
+                            {% if form.study_program.errors %}
+                                {% for error in form.study_program.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        {% if current_user.role == 'admin' %}
+                            <div class="mb-3">
+                                {{ form.teacher.label(class="form-label") }}
+                                {{ form.teacher(class="form-select") }}
+                                {% if form.teacher.errors %}
+                                    {% for error in form.teacher.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            {{ form.prerequisites.label(class="form-label") }}
+                            {{ form.prerequisites(class="form-select", multiple="multiple") }}
+                            {% if form.prerequisites.errors %}
+                                {% for error in form.prerequisites.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <h4 class="mb-3">Tvarkaraštis</h4>
+                        {% for schedule_form in form.schedule %}
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            {{ schedule_form.date.label(class="form-label") }}
+                                            {{ schedule_form.date(class="form-control", type="date") }}
+                                        </div>
+                                        <div class="col-md-3">
+                                            {{ schedule_form.start_time.label(class="form-label") }}
+                                            {{ schedule_form.start_time(class="form-control", type="time") }}
+                                        </div>
+                                        <div class="col-md-3">
+                                            {{ schedule_form.end_time.label(class="form-label") }}
+                                            {{ schedule_form.end_time(class="form-control", type="time") }}
+                                        </div>
+                                        <div class="col-md-2">
+                                            {{ schedule_form.room.label(class="form-label") }}
+                                            {{ schedule_form.room(class="form-control") }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('main.module_details', module_id=module.id) }}" class="btn btn-secondary">Atšaukti</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

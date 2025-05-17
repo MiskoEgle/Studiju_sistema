@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Pažymiai{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Pažymiai</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if module_data %}
+        {% for module_info in module_data %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">{{ module_info.module.name }}</h5>
+            </div>
+            <div class="card-body">
+                {% if module_info.assessments %}
+                    {% for assessment_info in module_info.assessments %}
+                    <div class="mb-4">
+                        <h6 class="mb-3">{{ assessment_info.assessment.title }}</h6>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Studentas</th>
+                                        <th>Grupė</th>
+                                        <th>Pažymys</th>
+                                        <th>Data</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for grade in assessment_info.grades %}
+                                    <tr>
+                                        <td>{{ grade.student.first_name }} {{ grade.student.last_name }}</td>
+                                        <td>{{ grade.student.group.name if grade.student.group else '-' }}</td>
+                                        <td>{{ grade.value }}</td>
+                                        <td>{{ grade.date.strftime('%Y-%m-%d') }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center">Nėra įvestų pažymių</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info mb-0">
+                        Šiame modulyje nėra sukurtų vertinimų.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            Šiuo metu nėra modulių su pažymiais.
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

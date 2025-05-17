@@ -1,0 +1,584 @@
+{% extends "base.html" %}
+
+{% block title %}{{ module.name }} - Tvarkaraštis{% endblock %}
+
+{% block content %}
+<!-- Add CSRF token meta tag -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>{{ module.name }}</h2>
+            <p class="text-muted">{{ module.study_program.name }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('teacher.modules') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Grįžti
+            </a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
+                <i class="fas fa-plus"></i> Pridėti paskaitą
+            </button>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            <div class="calendar-toolbar mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <button class="btn btn-outline-secondary" id="prevWeek">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary mx-2" id="today">Šiandien</button>
+                        <button class="btn btn-outline-secondary" id="nextWeek">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <h4 class="current-week-range mb-0"></h4>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered calendar-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Laikas</th>
+                            {% for day in ['Pirmadienis', 'Antradienis', 'Trečiadienis', 'Ketvirtadienis', 'Penktadienis'] %}
+                            <th class="text-center day-column" data-day="{{ loop.index }}">
+                                {{ day }}
+                                <br>
+                                <small class="date-display"></small>
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hour in range(8, 21) %}
+                            <tr>
+                                <td class="time-slot">{{ "%02d:00"|format(hour) }}</td>
+                                {% for day in range(1, 6) %}
+                                <td class="schedule-slot" data-day="{{ day }}" data-hour="{{ hour }}"></td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Schedule Modal -->
+<div class="modal fade" id="addScheduleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pridėti paskaitą - {{ module.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleForm">
+                    <input type="hidden" name="module_id" value="{{ module.id }}">
+                    
+                    <!-- Group selection field -->
+                    <div class="mb-3">
+                        <label for="group_id" class="form-label">Grupė *</label>
+                        <select class="form-select" name="group_id" id="group_id" required>
+                            <option value="">Pasirinkite grupę</option>
+                            {% for group in groups %}
+                                <option value="{{ group.id }}">{{ group.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="invalid-feedback">Pasirinkite grupę</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Pavadinimas</label>
+                        <input type="text" class="form-control" name="title" required 
+                               placeholder="Pvz.: Paskaita 1, Laboratorinis darbas 2, Kontrolinis darbas">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipas</label>
+                        <select class="form-select" name="type" required>
+                            <option value="lecture">Paskaita</option>
+                            <option value="lab">Laboratorinis darbas</option>
+                            <option value="test">Kontrolinis darbas</option>
+                            <option value="exam">Egzaminas</option>
+                            <option value="consultation">Konsultacija</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Data</label>
+                        <input type="date" class="form-control" name="date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pradžios laikas</label>
+                        <input type="time" class="form-control" name="start_time" min="08:00" max="20:00" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pabaigos laikas</label>
+                        <input type="time" class="form-control" name="end_time" min="08:00" max="20:00" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Auditorija</label>
+                        <input type="text" class="form-control" name="room" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Atšaukti</button>
+                <button type="button" class="btn btn-primary" id="saveSchedule">Išsaugoti</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Schedule Modal -->
+<div class="modal fade" id="editScheduleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Redaguoti paskaitą</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editScheduleForm">
+                    <input type="hidden" name="entry_id" id="edit_entry_id">
+                    <input type="hidden" name="module_id" value="{{ module.id }}">
+                    
+                    <!-- Group selection field -->
+                    <div class="mb-3">
+                        <label class="form-label">Grupė</label>
+                        <select class="form-select" name="group_id" id="edit_group_id" required>
+                            <option value="">Pasirinkite grupę</option>
+                            {% for group in groups %}
+                                <option value="{{ group.id }}">{{ group.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pavadinimas</label>
+                        <input type="text" class="form-control" name="title" id="edit_title" required 
+                               placeholder="Pvz.: Paskaita 1, Laboratorinis darbas 2, Kontrolinis darbas">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipas</label>
+                        <select class="form-select" name="type" id="edit_type" required>
+                            <option value="lecture">Paskaita</option>
+                            <option value="lab">Laboratorinis darbas</option>
+                            <option value="test">Kontrolinis darbas</option>
+                            <option value="exam">Egzaminas</option>
+                            <option value="consultation">Konsultacija</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Data</label>
+                        <input type="date" class="form-control" name="date" id="edit_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pradžios laikas</label>
+                        <input type="time" class="form-control" name="start_time" id="edit_start_time" min="08:00" max="20:00" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pabaigos laikas</label>
+                        <input type="time" class="form-control" name="end_time" id="edit_end_time" min="08:00" max="20:00" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Auditorija</label>
+                        <input type="text" class="form-control" name="room" id="edit_room" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="deleteSchedule">Ištrinti</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Atšaukti</button>
+                <button type="button" class="btn btn-primary" id="updateSchedule">Išsaugoti</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/template" id="pageData">
+    {
+        "scheduleData": {{ schedule_data|tojson|safe }},
+        "holidays": {{ holidays|tojson|safe }}
+    }
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentDate = new Date();
+    const pageDataElement = document.getElementById('pageData');
+    const pageData = JSON.parse(pageDataElement.textContent);
+    const scheduleData = pageData.scheduleData || [];
+    const holidayDates = pageData.holidays || {};
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    // Set min date for the date input to today
+    const dateInput = document.querySelector('input[name="date"]');
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.min = today;
+    }
+    
+    function updateCalendar(date) {
+        // Get Monday of current week
+        const monday = new Date(date);
+        monday.setDate(monday.getDate() - monday.getDay() + 1);
+        monday.setHours(0, 0, 0, 0);
+        
+        // Update week range display
+        const friday = new Date(monday);
+        friday.setDate(friday.getDate() + 4);
+        document.querySelector('.current-week-range').textContent = 
+            `${monday.toLocaleDateString('lt-LT')} - ${friday.toLocaleDateString('lt-LT')}`;
+        
+        // Clear all slots first
+        document.querySelectorAll('.schedule-slot').forEach(slot => {
+            slot.innerHTML = '';
+            slot.className = 'schedule-slot';
+        });
+        
+        // Update column headers and prepare slots
+        for (let i = 0; i < 5; i++) {
+            const currentDay = new Date(monday);
+            currentDay.setDate(currentDay.getDate() + i);
+            const dateStr = currentDay.toISOString().split('T')[0];
+            
+            // Update header
+            const th = document.querySelector(`.day-column[data-day="${i + 1}"]`);
+            const dateDisplay = th.querySelector('.date-display');
+            dateDisplay.textContent = currentDay.toLocaleDateString('lt-LT');
+            
+            // Clear and set header classes
+            th.className = 'text-center day-column';
+            th.removeAttribute('title');
+            
+            // Mark holidays
+            if (holidayDates[dateStr]) {
+                th.classList.add('holiday');
+                th.setAttribute('title', holidayDates[dateStr]);
+            }
+            
+            // Update slots for this day
+            for (let hour = 8; hour < 21; hour++) {
+                const slot = document.querySelector(`.schedule-slot[data-day="${i + 1}"][data-hour="${hour}"]`);
+                slot.setAttribute('data-date', dateStr);
+                
+                // Find any schedule entries for this date and hour
+                const entries = scheduleData.filter(entry => {
+                    const startHour = parseInt(entry.start_time.split(':')[0]);
+                    return entry.date === dateStr && startHour === hour;
+                });
+                
+                if (entries && entries.length > 0) {
+                    entries.forEach(entry => {
+                        const entryHtml = `
+                            <div class="schedule-entry">
+                                ${entry.start_time} - ${entry.end_time}<br>
+                                ${entry.title}<br>
+                                ${entry.module_name}<br>
+                                Aud. ${entry.room}
+                                <button class="btn btn-sm btn-link edit-schedule" 
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editScheduleModal"
+                                    data-entry-id="${entry.id}"
+                                    data-module-id="${entry.module_id}"
+                                    data-group-id="${entry.group_id}"
+                                    data-title="${(entry.title || '').replace(/"/g, '&quot;')}"
+                                    data-type="${entry.type || ''}"
+                                    data-date="${entry.date || ''}"
+                                    data-start-time="${entry.start_time || ''}"
+                                    data-end-time="${entry.end_time || ''}"
+                                    data-room="${entry.room || ''}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        `;
+                        
+                        slot.innerHTML += entryHtml;
+                        slot.classList.add('has-lecture');
+                    });
+                }
+            }
+        }
+    }
+    
+    // Navigation handlers
+    document.getElementById('prevWeek').addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() - 7);
+        updateCalendar(currentDate);
+    });
+    
+    document.getElementById('nextWeek').addEventListener('click', () => {
+        currentDate.setDate(currentDate.getDate() + 7);
+        updateCalendar(currentDate);
+    });
+    
+    document.getElementById('today').addEventListener('click', () => {
+        currentDate = new Date();
+        updateCalendar(currentDate);
+    });
+    
+    // Initialize calendar
+    updateCalendar(currentDate);
+    
+    // Form validation and submission
+    const form = document.getElementById('scheduleForm');
+    const saveButton = document.getElementById('saveSchedule');
+    
+    saveButton.addEventListener('click', function() {
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+        
+        const formData = new FormData(form);
+        formData.append('csrf_token', csrfToken);
+        
+        fetch('/teacher/schedule/add', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    try {
+                        const data = JSON.parse(text);
+                        throw new Error(data.message || 'Įvyko klaida pridedant paskaitą');
+                    } catch (e) {
+                        console.error('Server response:', text);
+                        throw new Error('Įvyko klaida pridedant paskaitą');
+                    }
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Įvyko klaida pridedant paskaitą');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(error.message);
+        });
+    });
+
+    // Edit schedule functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-schedule')) {
+            const button = e.target.closest('.edit-schedule');
+            const entryId = button.getAttribute('data-entry-id');
+            
+            // Verify we have a valid entry ID
+            if (!entryId || entryId === 'undefined' || entryId === '') {
+                console.error('No valid entry ID found');
+                alert('Klaida: Nepavyko rasti paskaitos ID');
+                return;
+            }
+            
+            // Fill the edit form with data from button attributes
+            document.getElementById('edit_entry_id').value = entryId;
+            document.getElementById('edit_group_id').value = button.getAttribute('data-group-id');
+            document.getElementById('edit_title').value = button.getAttribute('data-title');
+            document.getElementById('edit_type').value = button.getAttribute('data-type');
+            document.getElementById('edit_date').value = button.getAttribute('data-date');
+            document.getElementById('edit_start_time').value = button.getAttribute('data-start-time');
+            document.getElementById('edit_end_time').value = button.getAttribute('data-end-time');
+            document.getElementById('edit_room').value = button.getAttribute('data-room');
+        }
+    });
+
+    // Update schedule
+    document.getElementById('updateSchedule').addEventListener('click', function() {
+        const form = document.getElementById('editScheduleForm');
+        const entryId = document.getElementById('edit_entry_id').value;
+        
+        if (!entryId || entryId === 'undefined' || entryId === '') {
+            console.error('No valid entry ID found');
+            alert('Klaida: Nepavyko rasti paskaitos ID');
+            return;
+        }
+        
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+        
+        const formData = new FormData(form);
+        const urlEncodedData = new URLSearchParams(formData);
+        
+        fetch(`/teacher/schedule/${entryId}/update`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: urlEncodedData.toString()
+        })
+        .then(response => {
+            return response.text().then(text => {
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Server returned unexpected content type. Please try again.');
+                }
+            });
+        })
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                throw new Error(data.message || 'Įvyko klaida atnaujinant paskaitą');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(error.message || 'Įvyko klaida atnaujinant paskaitą. Pabandykite dar kartą.');
+        });
+    });
+
+    // Delete schedule
+    document.getElementById('deleteSchedule').addEventListener('click', function() {
+        if (confirm('Ar tikrai norite ištrinti šią paskaitą?')) {
+            const entryId = document.getElementById('edit_entry_id').value;
+            
+            if (!entryId || entryId === 'undefined' || entryId === '') {
+                console.error('No valid entry ID found');
+                alert('Klaida: Nepavyko rasti paskaitos ID');
+                return;
+            }
+            
+            fetch(`/teacher/schedule/${entryId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    throw new Error(data.message || 'Įvyko klaida ištrinant paskaitą');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'Įvyko klaida ištrinant paskaitą. Pabandykite dar kartą.');
+            });
+        }
+    });
+
+    // Reset forms when modals are closed
+    const addModal = document.getElementById('addScheduleModal');
+    addModal.addEventListener('hidden.bs.modal', function() {
+        form.reset();
+        form.classList.remove('was-validated');
+    });
+
+    const editModal = document.getElementById('editScheduleModal');
+    editModal.addEventListener('hidden.bs.modal', function() {
+        const editForm = document.getElementById('editScheduleForm');
+        editForm.reset();
+        editForm.classList.remove('was-validated');
+    });
+});
+</script>
+
+<style>
+.calendar-table {
+    table-layout: fixed;
+}
+
+.time-slot {
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.schedule-slot {
+    height: 60px;
+    padding: 5px;
+    vertical-align: top;
+}
+
+.has-lecture {
+    background-color: #e3f2fd;
+}
+
+.schedule-entry {
+    position: relative;
+    font-size: 0.9em;
+    padding: 5px;
+    border-radius: 4px;
+    background-color: #bbdefb;
+    margin-bottom: 2px;
+}
+
+.edit-schedule {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    padding: 0;
+    color: #1976d2;
+}
+
+.edit-schedule:hover {
+    color: #0d47a1;
+}
+
+.holiday {
+    background-color: #ffebee;
+}
+
+.current-week-range {
+    font-size: 1.2em;
+    color: #1976d2;
+}
+
+/* Form validation styles */
+.was-validated .form-control:invalid,
+.was-validated .form-select:invalid {
+    border-color: #dc3545;
+}
+
+.was-validated .form-control:valid,
+.was-validated .form-select:valid {
+    border-color: #198754;
+}
+
+.invalid-feedback {
+    display: none;
+    color: #dc3545;
+    font-size: 0.875em;
+}
+
+.was-validated .form-control:invalid ~ .invalid-feedback,
+.was-validated .form-select:invalid ~ .invalid-feedback {
+    display: block;
+}
+</style>
+{% endblock %} 

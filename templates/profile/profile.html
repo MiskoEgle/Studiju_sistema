@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Profilis{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if user.profile_picture %}
+                        <img src="{{ url_for('static', filename='uploads/images/' + user.profile_picture) }}" 
+                             class="rounded-circle mb-3" 
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <i class="fas fa-user-circle fa-5x mb-3"></i>
+                    {% endif %}
+                    <h4>{{ user.first_name }} {{ user.last_name }}</h4>
+                    <p class="text-muted">{{ user.email }}</p>
+                    <p class="text-muted">
+                        {% if user.role == 'admin' %}
+                            Administratorius
+                        {% elif user.role == 'teacher' %}
+                            Dėstytojas
+                        {% else %}
+                            Studentas
+                        {% endif %}
+                    </p>
+                    {% if group %}
+                        <p class="text-muted">Grupė: {{ group }}</p>
+                    {% endif %}
+                    {% if study_program %}
+                        <p class="text-muted">Studijų programa: {{ study_program }}</p>
+                    {% endif %}
+                    <a href="{{ url_for('main.edit_profile') }}" class="btn btn-primary">
+                        Redaguoti profilį
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            {% if user.is_student %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Mano moduliai</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if modules %}
+                            <div class="list-group">
+                                {% for module in modules %}
+                                    <a href="{{ url_for('main.module_details', module_id=module.id) }}" 
+                                       class="list-group-item list-group-item-action">
+                                        {{ module.name }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p>Jūs dar nesate užsiregistravęs į jokius modulius.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Mano pažymiai</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if grades %}
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Modulis</th>
+                                            <th>Vertinimas</th>
+                                            <th>Pažymys</th>
+                                            <th>Data</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for grade in grades %}
+                                            <tr>
+                                                <td>{{ grade.assessment.module.name }}</td>
+                                                <td>{{ grade.assessment.name }}</td>
+                                                <td>{{ grade.grade }}</td>
+                                                <td>{{ grade.created_at.strftime('%Y-%m-%d') }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p>Jūs dar neturite jokių pažymių.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% elif user.is_teacher %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Mano dėstomi moduliai</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if modules %}
+                            <div class="list-group">
+                                {% for module in modules %}
+                                    <a href="{{ url_for('main.module_details', module_id=module.id) }}" 
+                                       class="list-group-item list-group-item-action">
+                                        {{ module.name }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p>Jūs dar nedėstote jokių modulių.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

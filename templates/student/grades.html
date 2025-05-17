@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ title }}</h1>
+
+            {% if not grades_by_module %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Kol kas neturite jokių pažymių.
+            </div>
+            {% else %}
+                {% for module_name, grades in grades_by_module.items() %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{{ module_name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Vertinimas</th>
+                                        <th>Pažymys</th>
+                                        <th>Svoris</th>
+                                        <th>Data</th>
+                                        <th>Atsiliepimas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for grade in grades %}
+                                    <tr>
+                                        <td>{{ grade.assessment_name }}</td>
+                                        <td>
+                                            <span class="badge {% if grade.grade >= 5 %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ "%.2f"|format(grade.grade) }}
+                                            </span>
+                                        </td>
+                                        <td>{{ grade.weight }}%</td>
+                                        <td>{{ grade.due_date.strftime('%Y-%m-%d') }}</td>
+                                        <td>
+                                            {% if grade.feedback %}
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-info" 
+                                                    data-bs-toggle="tooltip" 
+                                                    title="{{ grade.feedback }}">
+                                                <i class="fas fa-comment"></i>
+                                            </button>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    <tr class="table-light">
+                                        <td><strong>Vidurkis</strong></td>
+                                        <td colspan="4">
+                                            {% set weighted_sum = namespace(value=0) %}
+                                            {% set total_weight = namespace(value=0) %}
+                                            {% for grade in grades %}
+                                                {% set weighted_sum.value = weighted_sum.value + (grade.grade * grade.weight) %}
+                                                {% set total_weight.value = total_weight.value + grade.weight %}
+                                            {% endfor %}
+                                            {% if total_weight.value > 0 %}
+                                                {% set average = weighted_sum.value / total_weight.value %}
+                                                <span class="badge {% if average >= 5 %}bg-success{% else %}bg-danger{% endif %}">
+                                                    {{ "%.2f"|format(average) }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %} 

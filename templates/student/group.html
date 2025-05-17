@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ title }}</h1>
+
+            {% if not group %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Jūs neturite priskirtos grupės. Kreipkitės į administratorių.
+            </div>
+            {% else %}
+            <div class="row">
+                <!-- Group Information Card -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Grupės informacija</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">Grupės pavadinimas</h6>
+                                <p class="h4">{{ group.name }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">Fakultetas</h6>
+                                <p>{{ group.study_program.faculty.name }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-2">Studijų programa</h6>
+                                <p>{{ group.study_program.name }}</p>
+                            </div>
+                            <div>
+                                <h6 class="text-muted mb-2">Studentų skaičius</h6>
+                                <p>{{ group.students|length }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Students List Card -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Grupės studentai</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group">
+                                {% for student in group.students|sort(attribute='last_name') %}
+                                <div class="list-group-item">
+                                    <div class="d-flex align-items-center">
+                                        {% if student.profile_picture %}
+                                        <img src="{{ url_for('static', filename='uploads/images/' + student.profile_picture) }}" 
+                                             class="rounded-circle me-3" 
+                                             style="width: 40px; height: 40px; object-fit: cover;"
+                                             alt="{{ student.first_name }} {{ student.last_name }}"
+                                             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/default-profile.png') }}'">
+                                        {% else %}
+                                        <div class="rounded-circle bg-secondary me-3 d-flex align-items-center justify-content-center"
+                                             style="width: 40px; height: 40px;">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-0">{{ student.first_name }} {{ student.last_name }}</h6>
+                                            <small class="text-muted">{{ student.email }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Tvarkaraštis</h5>
+                </div>
+                <div class="card-body">
+                    {% if schedules_by_day %}
+                    <div class="row">
+                        {% for day, schedules in schedules_by_day.items() %}
+                        <div class="col-md-4 mb-4">
+                            <h6 class="mb-3">{{ day }}</h6>
+                            <div class="list-group">
+                                {% for schedule in schedules %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <h6 class="mb-1">{{ schedule.module_name }}</h6>
+                                        <small class="text-muted">
+                                            {{ schedule.start_time }} - {{ schedule.end_time }}
+                                        </small>
+                                    </div>
+                                    <p class="mb-1">
+                                        <i class="fas fa-door-open me-2"></i>
+                                        {{ schedule.room }}
+                                        {% if schedule.type %}
+                                        <span class="badge bg-info ms-2">{{ schedule.type }}</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info mb-0">
+                        <i class="fas fa-calendar-xmark me-2"></i>
+                        Šią savaitę nėra suplanuotų paskaitų.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

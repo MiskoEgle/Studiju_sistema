@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Vartotojų valdymas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Vartotojų valdymas</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Pending Users Section -->
+    {% if pending_users %}
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark" role="button" data-bs-toggle="collapse" data-bs-target="#pendingUsersCollapse" aria-expanded="false" aria-controls="pendingUsersCollapse" style="cursor: pointer;">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-caret-right me-2 collapse-icon"></i>
+                    Laukiantys patvirtinimo
+                    <span class="badge bg-dark ms-2">{{ pending_users|length }}</span>
+                </h5>
+            </div>
+        </div>
+        <div class="collapse" id="pendingUsersCollapse">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>El. paštas</th>
+                                <th>Vardas</th>
+                                <th>Pavardė</th>
+                                <th>Rolė</th>
+                                <th>Veiksmai</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in pending_users %}
+                            <tr>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.first_name }}</td>
+                                <td>{{ user.last_name }}</td>
+                                <td>
+                                    {% if user.role == 'student' %}
+                                        <span class="badge bg-dark text-white">Studentas</span>
+                                    {% elif user.role == 'teacher' %}
+                                        <span class="badge bg-dark text-white">Dėstytojas</span>
+                                    {% else %}
+                                        <span class="badge bg-dark text-white">{{ user.role|title }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form action="{{ url_for('admin.approve_user', user_id=user.id) }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-success" title="Patvirtinti vartotoją">
+                                            <i class="fas fa-check"></i> Patvirtinti
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('admin.reject_user', user_id=user.id) }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-danger" title="Atmesti vartotoją">
+                                            <i class="fas fa-times"></i> Atmesti
+                                        </button>
+                                    </form>
+                                    <a href="{{ url_for('admin.edit_user', id=user.id) }}" class="btn btn-primary" title="Redaguoti vartotoją">
+                                        <i class="fas fa-edit"></i> Redaguoti
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Admin Users Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white" role="button" data-bs-toggle="collapse" data-bs-target="#adminUsersCollapse" aria-expanded="false" aria-controls="adminUsersCollapse" style="cursor: pointer;">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-caret-right me-2 collapse-icon"></i>
+                    Administratoriai
+                    <span class="badge bg-light text-dark ms-2">{{ admin_users|length }}</span>
+                </h5>
+            </div>
+        </div>
+        <div class="collapse" id="adminUsersCollapse">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>El. paštas</th>
+                                <th>Vardas</th>
+                                <th>Pavardė</th>
+                                <th>Statusas</th>
+                                <th>Veiksmai</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in admin_users %}
+                            <tr>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.first_name }}</td>
+                                <td>{{ user.last_name }}</td>
+                                <td>
+                                    {% if user.is_active %}
+                                    <span class="badge bg-success">Aktyvus</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Neaktyvus</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('admin.edit_user', id=user.id) }}" class="btn btn-sm btn-primary" title="Redaguoti vartotoją">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button onclick="showDeleteModal('{{ user.id }}')" class="btn btn-sm btn-danger" title="Ištrinti vartotoją">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <button onclick="showResetPasswordModal('{{ user.id }}')" class="btn btn-sm btn-warning" title="Atstatyti slaptažodį">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Users Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white" role="button" data-bs-toggle="collapse" data-bs-target="#teacherUsersCollapse" aria-expanded="false" aria-controls="teacherUsersCollapse" style="cursor: pointer;">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-caret-right me-2 collapse-icon"></i>
+                    Dėstytojai
+                    <span class="badge bg-light text-dark ms-2">{{ teacher_users|length }}</span>
+                </h5>
+            </div>
+        </div>
+        <div class="collapse" id="teacherUsersCollapse">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>El. paštas</th>
+                                <th>Vardas</th>
+                                <th>Pavardė</th>
+                                <th>Statusas</th>
+                                <th>Veiksmai</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in teacher_users %}
+                            <tr>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.first_name }}</td>
+                                <td>{{ user.last_name }}</td>
+                                <td>
+                                    {% if user.is_active %}
+                                    <span class="badge bg-success">Aktyvus</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Neaktyvus</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('admin.edit_user', id=user.id) }}" class="btn btn-sm btn-primary" title="Redaguoti vartotoją">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button onclick="showDeleteModal('{{ user.id }}')" class="btn btn-sm btn-danger" title="Ištrinti vartotoją">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <button onclick="showResetPasswordModal('{{ user.id }}')" class="btn btn-sm btn-warning" title="Atstatyti slaptažodį">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Users Section -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white" role="button" data-bs-toggle="collapse" data-bs-target="#studentUsersCollapse" aria-expanded="false" aria-controls="studentUsersCollapse" style="cursor: pointer;">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-caret-right me-2 collapse-icon"></i>
+                    Studentai
+                    <span class="badge bg-light text-dark ms-2">{{ student_users|length }}</span>
+                </h5>
+            </div>
+        </div>
+        <div class="collapse" id="studentUsersCollapse">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>El. paštas</th>
+                                <th>Vardas</th>
+                                <th>Pavardė</th>
+                                <th>Statusas</th>
+                                <th>Veiksmai</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in student_users %}
+                            <tr>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.first_name }}</td>
+                                <td>{{ user.last_name }}</td>
+                                <td>
+                                    {% if user.is_active %}
+                                    <span class="badge bg-success">Aktyvus</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Neaktyvus</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('admin.edit_user', id=user.id) }}" class="btn btn-sm btn-primary" title="Redaguoti vartotoją">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button onclick="showDeleteModal('{{ user.id }}')" class="btn btn-sm btn-danger" title="Ištrinti vartotoją">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    <button onclick="showResetPasswordModal('{{ user.id }}')" class="btn btn-sm btn-warning" title="Atstatyti slaptažodį">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Patvirtinkite veiksmą</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Ar tikrai norite ištrinti šį vartotoją?
+            </div>
+            <div class="modal-footer">
+                <form id="deleteForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Atšaukti</button>
+                    <button type="submit" class="btn btn-danger">Ištrinti</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">Atstatyti slaptažodį</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Ar tikrai norite atstatyti vartotojo slaptažodį?</p>
+                <p>Bus sugeneruotas naujas laikinas slaptažodis, kurį turėsite perduoti vartotojui.</p>
+            </div>
+            <div class="modal-footer">
+                <form id="resetPasswordForm" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Atšaukti</button>
+                    <button type="submit" class="btn btn-warning">Atstatyti</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+function showDeleteModal(userId) {
+    const form = document.getElementById('deleteForm');
+    form.action = `/admin/users/${userId}/delete`;
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+function showResetPasswordModal(userId) {
+    const form = document.getElementById('resetPasswordForm');
+    form.action = `/admin/users/${userId}/reset-password`;
+    const modal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    modal.show();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers for all collapsible sections
+    document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(function(element) {
+        element.addEventListener('click', function() {
+            const icon = this.querySelector('.collapse-icon');
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            
+            // Rotate icon when clicked
+            if (isExpanded) {
+                icon.classList.remove('fa-caret-down');
+                icon.classList.add('fa-caret-right');
+            } else {
+                icon.classList.remove('fa-caret-right');
+                icon.classList.add('fa-caret-down');
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.collapse-icon {
+    transition: transform 0.2s;
+}
+.card-header[aria-expanded="true"] .collapse-icon {
+    transform: rotate(90deg);
+}
+</style>
+{% endblock %}
+
+{% endblock %} 

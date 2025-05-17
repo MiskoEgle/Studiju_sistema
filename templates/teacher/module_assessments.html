@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+
+{% block title %}{{ module.name }} - Vertinimai{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>{{ module.name }} - Vertinimai</h2>
+            <p class="text-muted">{{ module.study_program.name }}</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('teacher.modules') }}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left"></i> Grįžti
+            </a>
+            <a href="{{ url_for('teacher.module_grades', module_id=module.id) }}" class="btn btn-info me-2">
+                <i class="fas fa-chart-bar"></i> Pažymių statistika
+            </a>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAssessmentModal">
+                <i class="fas fa-plus"></i> Pridėti vertinimą
+            </button>
+        </div>
+    </div>
+
+    {% if not assessments %}
+    <div class="alert alert-info">
+        Šiame modulyje dar nėra vertinimų.
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="align-middle" style="min-width: 200px;">Studentas</th>
+                            {% for assessment in assessments %}
+                            <th class="text-center align-middle" style="min-width: 150px;" data-bs-toggle="tooltip" title="{{ assessment.description }}">
+                                <div class="fw-bold">{{ assessment.title }}</div>
+                                <div class="text-muted small">
+                                    {% if assessment.type == 'lecture' %}
+                                    <i class="fas fa-chalkboard-teacher"></i> Paskaita
+                                    {% elif assessment.type == 'lab' %}
+                                    <i class="fas fa-flask"></i> Laboratorinis
+                                    {% elif assessment.type == 'test' %}
+                                    <i class="fas fa-file-alt"></i> Kontrolinis
+                                    {% elif assessment.type == 'exam' %}
+                                    <i class="fas fa-graduation-cap"></i> Egzaminas
+                                    {% elif assessment.type == 'project' %}
+                                    <i class="fas fa-project-diagram"></i> Projektas
+                                    {% else %}
+                                    <i class="fas fa-tasks"></i> Kita
+                                    {% endif %}
+                                </div>
+                                <div class="text-muted small">
+                                    {{ assessment.date.strftime('%Y-%m-%d') }}
+                                </div>
+                                <div class="btn-group mt-2">
+                                    <button class="btn btn-sm btn-outline-primary edit-assessment" 
+                                            data-assessment-id="{{ assessment.id }}"
+                                            title="Redaguoti">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-assessment" 
+                                            data-assessment-id="{{ assessment.id }}"
+                                            title="Ištrinti">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student_data in students_data %}
+                        <tr>
+                            <td class="align-middle">
+                                <div class="fw-bold">{{ student_data.student.first_name }} {{ student_data.student.last_name }}</div>
+                            </td>
+                            {% for assessment in assessments %}
+                            <td class="text-center align-middle">
+                                {% if student_data.grades.get(assessment.id) %}
+                                    {% set grade = student_data.grades[assessment.id] %}
+                                    <div class="d-flex justify-content-center align-items-center gap-2">
+                                        <span class="badge bg-light text-dark">{{ grade.grade }}</span>
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" 
+                                                    class="btn btn-outline-primary edit-grade"
+                                                    data-student-id="{{ student_data.student.id }}"
+                                                    data-assessment-id="{{ assessment.id }}"
+                                                    data-current-grade="{{ grade.grade }}"
+                                                    title="Redaguoti pažymį">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-primary add-grade"
+                                            data-student-id="{{ student_data.student.id }}"
+                                            data-assessment-id="{{ assessment.id }}"
+                                            title="Įvesti pažymį">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Assessment Modal -->
+<div class="modal fade" id="addAssessmentModal" tabindex="-1" aria-labelledby="addAssessmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAssessmentModalLabel">Naujas vertinimas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addAssessmentForm" method="POST" action="{{ url_for('teacher.add_assessment', module_id=module.id) }}">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Pavadinimas</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Tipas</label>
+                        <select class="form-select" id="type" name="type" required>
+                            {% for type in assessment_types %}
+                            <option value="{{ type }}">
+                                {% if type == 'lecture' %}Paskaita
+                                {% elif type == 'lab' %}Laboratorinis darbas
+                                {% elif type == 'test' %}Kontrolinis darbas
+                                {% elif type == 'exam' %}Egzaminas
+                                {% elif type == 'project' %}Projektas
+                                {% else %}Kita
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Data</label>
+                        <input type="date" class="form-control" id="date" name="date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="due_date" class="form-label">Terminas</label>
+                        <input type="datetime-local" class="form-control" id="due_date" name="due_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="weight_percentage" class="form-label">Svoris (%)</label>
+                        <input type="number" class="form-control" id="weight_percentage" name="weight_percentage" 
+                               min="0" max="100" value="0" required>
+                        <div class="form-text">Įveskite vertinimo svorį procentais (0-100).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="grading_scale" class="form-label">Vertinimo sistema</label>
+                        <select class="form-select" id="grading_scale" name="grading_scale" required>
+                            <option value="10_POINT">10 balų sistema</option>
+                            <option value="100_POINT">100 balų sistema</option>
+                            <option value="PERCENTAGE">Procentinė sistema</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="max_points" class="form-label">Maksimalus balų skaičius</label>
+                        <input type="number" class="form-control" id="max_points" name="max_points" min="0" step="0.1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Aprašymas</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Atšaukti</button>
+                    <button type="submit" class="btn btn-primary">Išsaugoti</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Assessment Modal -->
+<div class="modal fade" id="editAssessmentModal" tabindex="-1" aria-labelledby="editAssessmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editAssessmentModalLabel">Redaguoti vertinimą</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editAssessmentForm" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="edit_title" class="form-label">Pavadinimas</label>
+                        <input type="text" class="form-control" id="edit_title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_type" class="form-label">Tipas</label>
+                        <select class="form-select" id="edit_type" name="type" required>
+                            {% for type in assessment_types %}
+                            <option value="{{ type }}">
+                                {% if type == 'lecture' %}Paskaita
+                                {% elif type == 'lab' %}Laboratorinis darbas
+                                {% elif type == 'test' %}Kontrolinis darbas
+                                {% elif type == 'exam' %}Egzaminas
+                                {% elif type == 'project' %}Projektas
+                                {% else %}Kita
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_date" class="form-label">Data</label>
+                        <input type="date" class="form-control" id="edit_date" name="date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_due_date" class="form-label">Terminas</label>
+                        <input type="datetime-local" class="form-control" id="edit_due_date" name="due_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_weight_percentage" class="form-label">Svoris (%)</label>
+                        <input type="number" class="form-control" id="edit_weight_percentage" name="weight_percentage" 
+                               min="0" max="100" required>
+                        <div class="form-text">Įveskite vertinimo svorį procentais (0-100).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_grading_scale" class="form-label">Vertinimo sistema</label>
+                        <select class="form-select" id="edit_grading_scale" name="grading_scale" required>
+                            <option value="10_POINT">10 balų sistema</option>
+                            <option value="100_POINT">100 balų sistema</option>
+                            <option value="PERCENTAGE">Procentinė sistema</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_max_points" class="form-label">Maksimalus balų skaičius</label>
+                        <input type="number" class="form-control" id="edit_max_points" name="max_points" min="0" step="0.1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Aprašymas</label>
+                        <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Atšaukti</button>
+                    <button type="submit" class="btn btn-primary">Išsaugoti</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Grade Modal -->
+<div class="modal fade" id="gradeModal" tabindex="-1" aria-labelledby="gradeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="gradeModalLabel">Įvesti/Redaguoti pažymį</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="gradeForm" method="POST" onsubmit="return false;">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" id="student_id" name="student_id">
+                    <input type="hidden" id="assessment_id" name="assessment_id">
+                    
+                    <div class="mb-3">
+                        <label for="points" class="form-label">Pažymys</label>
+                        <input type="number" class="form-control" id="points" name="points" 
+                               step="0.1" required>
+                        <div class="form-text">Įveskite pažymį pagal vertinimo sistemą.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Komentaras</label>
+                        <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Atšaukti</button>
+                    <button type="submit" class="btn btn-primary">Išsaugoti</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="successModalLabel">Pavyko!</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-check-circle text-success fa-3x"></i>
+                </div>
+                <p class="text-center" id="successMessage">Pažymys sėkmingai išsaugotas!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Gerai</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Initialize all modals
+    const gradeModal = new bootstrap.Modal(document.getElementById('gradeModal'));
+    const editModal = new bootstrap.Modal(document.getElementById('editAssessmentModal'));
+    const addModal = new bootstrap.Modal(document.getElementById('addAssessmentModal'));
+    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+
+    // Handle grade buttons
+    document.querySelectorAll('.add-grade, .edit-grade').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const studentId = this.dataset.studentId;
+            const assessmentId = this.dataset.assessmentId;
+            const currentGrade = this.dataset.currentGrade || '';
+            
+            // Set form values
+            document.getElementById('student_id').value = studentId;
+            document.getElementById('assessment_id').value = assessmentId;
+            document.getElementById('points').value = currentGrade;
+            document.getElementById('comment').value = '';
+            
+            // Update form action
+            document.getElementById('gradeForm').action = `/teacher/assessments/${assessmentId}/grades/${studentId}`;
+            
+            // Show modal
+            gradeModal.show();
+        });
+    });
+
+    // Handle grade form submission
+    const gradeForm = document.getElementById('gradeForm');
+    
+    gradeForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const url = `/teacher/assessments/${formData.get('assessment_id')}/grades/${formData.get('student_id')}`;
+        
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const studentId = formData.get('student_id');
+                const assessmentId = formData.get('assessment_id');
+                const points = data.grade.grade;
+                
+                // Find and update the cell
+                const button = document.querySelector(`button[data-student-id="${studentId}"][data-assessment-id="${assessmentId}"]`);
+                if (button) {
+                    const td = button.closest('td');
+                    if (td) {
+                        td.innerHTML = `
+                            <div class="d-flex justify-content-center align-items-center gap-2">
+                                <span class="badge bg-light text-dark">${points}</span>
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" 
+                                            class="btn btn-outline-primary edit-grade"
+                                            data-student-id="${studentId}"
+                                            data-assessment-id="${assessmentId}"
+                                            data-current-grade="${points}"
+                                            title="Redaguoti pažymį">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Reattach click handler
+                        const newButton = td.querySelector('.edit-grade');
+                        if (newButton) {
+                            newButton.addEventListener('click', function() {
+                                document.getElementById('student_id').value = this.dataset.studentId;
+                                document.getElementById('assessment_id').value = this.dataset.assessmentId;
+                                document.getElementById('points').value = this.dataset.currentGrade;
+                                document.getElementById('comment').value = '';
+                                gradeModal.show();
+                            });
+                        }
+                    }
+                }
+                
+                // Show success message
+                const successAlert = document.createElement('div');
+                successAlert.className = 'alert alert-success alert-dismissible fade show';
+                successAlert.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999;';
+                successAlert.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    Pažymys sėkmingai išsaugotas!
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                document.body.appendChild(successAlert);
+                
+                // Hide alert after 3 seconds
+                setTimeout(() => {
+                    successAlert.remove();
+                }, 3000);
+                
+                // Close the modal
+                gradeModal.hide();
+            } else {
+                alert(data.message || 'Įvyko klaida išsaugant pažymį.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Įvyko klaida bandant išsaugoti pažymį.');
+        });
+    });
+
+    // Set minimum date for date inputs
+    const dateInputs = document.querySelectorAll('input[type="date"]');
+    if (dateInputs) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInputs.forEach(input => input.min = today);
+    }
+
+    // Handle assessment deletion
+    document.querySelectorAll('.delete-assessment').forEach(button => {
+        button.addEventListener('click', function() {
+            const assessmentId = this.dataset.assessmentId;
+            if (confirm('Ar tikrai norite ištrinti šį vertinimą?')) {
+                fetch(`/teacher/assessments/${assessmentId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Klaida trinant vertinimą: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Įvyko klaida bandant ištrinti vertinimą.');
+                });
+            }
+        });
+    });
+
+    // Handle assessment editing
+    document.querySelectorAll('.edit-assessment').forEach(button => {
+        button.addEventListener('click', function() {
+            const assessmentId = this.dataset.assessmentId;
+            
+            // Fetch assessment data
+            fetch(`/teacher/assessments/${assessmentId}/edit`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const assessment = data.assessment;
+                    
+                    // Fill form with assessment data
+                    document.getElementById('edit_title').value = assessment.title;
+                    document.getElementById('edit_type').value = assessment.type;
+                    document.getElementById('edit_date').value = assessment.date;
+                    document.getElementById('edit_due_date').value = assessment.due_date;
+                    document.getElementById('edit_weight_percentage').value = assessment.weight_percentage;
+                    document.getElementById('edit_grading_scale').value = assessment.grading_scale;
+                    document.getElementById('edit_max_points').value = assessment.max_points;
+                    document.getElementById('edit_description').value = assessment.description;
+                    
+                    // Update form action
+                    document.getElementById('editAssessmentForm').action = `/teacher/assessments/${assessmentId}/edit`;
+                    
+                    // Show modal
+                    editModal.show();
+                } else {
+                    alert('Klaida gaunant vertinimo duomenis: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Įvyko klaida bandant gauti vertinimo duomenis.');
+            });
+        });
+    });
+
+    // Handle edit form submission
+    document.getElementById('editAssessmentForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Klaida atnaujinant vertinimą: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Įvyko klaida bandant atnaujinti vertinimą.');
+        });
+    });
+
+    // Form validation
+    const addAssessmentForm = document.getElementById('addAssessmentForm');
+    if (addAssessmentForm) {
+        addAssessmentForm.addEventListener('submit', function(event) {
+            const maxPoints = document.getElementById('max_points').value;
+            if (maxPoints <= 0) {
+                event.preventDefault();
+                alert('Maksimalus balų skaičius turi būti didesnis už 0.');
+            }
+        });
+    }
+
+    const editGradeModal = new bootstrap.Modal(document.getElementById('editGradeModal'));
+    
+    // Edit grade button click handler
+    document.querySelectorAll('.edit-grade').forEach(button => {
+        button.addEventListener('click', function() {
+            const studentId = this.dataset.studentId;
+            const assessmentId = this.dataset.assessmentId;
+            const currentGrade = this.dataset.currentGrade;
+            
+            document.getElementById('edit_student_id').value = studentId;
+            document.getElementById('edit_assessment_id').value = assessmentId;
+            document.getElementById('edit_grade').value = currentGrade;
+            
+            editGradeModal.show();
+        });
+    });
+    
+    // Save grade form submit handler
+    document.getElementById('editGradeForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const response = await fetch('/teacher/save_grade', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                const studentId = formData.get('student_id');
+                const assessmentId = formData.get('assessment_id');
+                const grade = data.grade;
+                
+                // Find and update the cell
+                const cell = document.querySelector(`button.edit-grade[data-student-id="${studentId}"][data-assessment-id="${assessmentId}"]`)
+                    .closest('.d-flex')
+                    .querySelector('.badge');
+                cell.textContent = grade;
+                
+                // Update the data attribute
+                const editButton = document.querySelector(`button.edit-grade[data-student-id="${studentId}"][data-assessment-id="${assessmentId}"]`);
+                editButton.dataset.currentGrade = grade;
+                
+                editGradeModal.hide();
+                showToast('success', 'Pažymys sėkmingai išsaugotas');
+            } else {
+                showToast('error', data.message || 'Įvyko klaida išsaugant pažymį');
+            }
+        } else {
+            showToast('error', 'Įvyko klaida išsaugant pažymį');
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block head %}
+{{ super() }}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %} 

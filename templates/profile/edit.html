@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Redaguoti profilio nuotrauką{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Redaguoti profilio nuotrauką</h5>
+                    
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="text-center mb-4">
+                            {% if user.profile_picture %}
+                                <img src="{{ url_for('static', filename='uploads/images/' + user.profile_picture) }}" 
+                                     alt="Profile Picture" class="rounded-circle mb-3" 
+                                     style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                                <i class="fas fa-user-circle mb-3" style="font-size: 150px; color: #6c757d;"></i>
+                            {% endif %}
+                            
+                            <div class="mb-3">
+                                <label for="profile_picture" class="form-label">Profilio nuotrauka</label>
+                                <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*" required>
+                                <div class="form-text">Pasirinkite .jpg, .png arba .gif formato nuotrauką.</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.profile') }}" class="btn btn-secondary">Atšaukti</a>
+                            <button type="submit" class="btn btn-primary">Išsaugoti nuotrauką</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

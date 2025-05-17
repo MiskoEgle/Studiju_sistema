@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ title }}</h1>
+        <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Grįžti į vartotojų sąrašą
+        </a>
+    </div>
+
+    {% if pending_users %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Vardas</th>
+                    <th>Pavardė</th>
+                    <th>El. paštas</th>
+                    <th>Rolė</th>
+                    <th>Veiksmai</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in pending_users %}
+                <tr>
+                    <td>{{ user.first_name }}</td>
+                    <td>{{ user.last_name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        {% if user.role == 'teacher' %}
+                            Dėstytojas
+                        {% elif user.role == 'student' %}
+                            Studentas
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form action="{{ url_for('admin.approve_user', user_id=user.id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-success" title="Patvirtinti vartotoją">
+                                <i class="fas fa-check"></i> Patvirtinti
+                            </button>
+                        </form>
+                        <form action="{{ url_for('admin.reject_user', user_id=user.id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-sm btn-danger" title="Atmesti vartotoją">
+                                <i class="fas fa-times"></i> Atmesti
+                            </button>
+                        </form>
+                        <a href="{{ url_for('admin.edit_user', id=user.id) }}" class="btn btn-sm btn-primary" title="Redaguoti vartotoją">
+                            <i class="fas fa-edit"></i> Redaguoti
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        Nėra nepatvirtintų vartotojų.
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

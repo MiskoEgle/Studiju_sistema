@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Studento Skydelis{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Studento Skydelis</h1>
+    
+    <div class="row">
+        <!-- Modulių kortelė -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Mano Moduliai</h5>
+                    <p class="card-text">Peržiūrėkite jūsų studijuojamus modulius.</p>
+                    <a href="{{ url_for('student.modules') }}" class="btn btn-primary">Peržiūrėti modulius</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pažymių kortelė -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Mano Pažymiai</h5>
+                    <p class="card-text">Peržiūrėkite savo pažymius ir vertinimus.</p>
+                    <a href="{{ url_for('student.grades') }}" class="btn btn-primary">Peržiūrėti pažymius</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tvarkaraščio kortelė -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Tvarkaraštis</h5>
+                    <p class="card-text">Peržiūrėkite savo mokymosi tvarkaraštį.</p>
+                    <a href="{{ url_for('student.schedule') }}" class="btn btn-primary">Peržiūrėti tvarkaraštį</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vertinimų kortelė -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Vertinimai</h5>
+                    <p class="card-text">Peržiūrėkite būsimus ir praeitus vertinimus.</p>
+                    <a href="{{ url_for('student.assessments') }}" class="btn btn-primary">Peržiūrėti vertinimus</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grupės kortelė -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Mano Grupė</h5>
+                    <p class="card-text">Peržiūrėkite informaciją apie savo studijų grupę.</p>
+                    <a href="{{ url_for('student.group') }}" class="btn btn-primary">Peržiūrėti grupę</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profilio kortelė -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Profilis</h5>
+                    <p class="card-text">Valdykite savo paskyros informaciją.</p>
+                    <a href="{{ url_for('main.profile') }}" class="btn btn-primary">Peržiūrėti profilį</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

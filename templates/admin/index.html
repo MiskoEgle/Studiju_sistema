@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Administratoriaus Skydelis{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Administratoriaus Skydelis</h1>
+    
+    <div class="row">
+        <!-- Vartotojų kortelė -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Vartotojai</h5>
+                    <p class="card-text">Valdykite sistemos vartotojus: studentus, dėstytojus ir administratorius.</p>
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-primary">Peržiūrėti vartotojus</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fakultetų kortelė -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Fakultetai</h5>
+                    <p class="card-text">Valdykite fakultetus ir jų struktūrą.</p>
+                    <a href="{{ url_for('admin.faculties') }}" class="btn btn-primary">Peržiūrėti fakultetus</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Studijų programų kortelė -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Studijų Programos</h5>
+                    <p class="card-text">Valdykite studijų programas ir jų modulius.</p>
+                    <a href="{{ url_for('admin.study_programs') }}" class="btn btn-primary">Peržiūrėti programas</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grupių kortelė -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Grupės</h5>
+                    <p class="card-text">Valdykite studentų grupes ir jų priskyrimą prie studijų programų.</p>
+                    <a href="{{ url_for('admin.groups') }}" class="btn btn-primary">Peržiūrėti grupes</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modulių kortelė -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Moduliai</h5>
+                    <p class="card-text">Valdykite studijų modulius ir jų tvarkaraščius.</p>
+                    <a href="{{ url_for('main.modules') }}" class="btn btn-primary">Peržiūrėti modulius</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vertinimų kortelė -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Vertinimai</h5>
+                    <p class="card-text">Peržiūrėkite ir valdykite studentų vertinimus.</p>
+                    <a href="{{ url_for('admin.assessments') }}" class="btn btn-primary">Peržiūrėti vertinimus</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

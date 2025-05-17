@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Dėstytojo skydelis{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Dėstytojo skydelis</h2>
+
+    <div class="row mt-4">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Mano Moduliai</h5>
+                    <p class="card-text">Peržiūrėkite ir valdykite Jūsų dėstomus modulius.</p>
+                    <a href="{{ url_for('teacher.modules') }}" class="btn btn-primary">
+                        <i class="fas fa-book"></i> Peržiūrėti modulius
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Studentai</h5>
+                    <p class="card-text">Peržiūrėkite studentus ir jų pasiekimus.</p>
+                    <a href="{{ url_for('teacher.students') }}" class="btn btn-primary">
+                        <i class="fas fa-users"></i> Peržiūrėti studentus
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Vertinimai</h5>
+                    <p class="card-text">Kurkite ir valdykite studentų vertinimus.</p>
+                    <a href="{{ url_for('teacher.assessments') }}" class="btn btn-primary">
+                        <i class="fas fa-tasks"></i> Peržiūrėti vertinimus
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Pažymiai</h5>
+                    <p class="card-text">Peržiūrėkite visų modulių studentų pažymius ir statistiką.</p>
+                    <a href="{{ url_for('teacher.grades_overview') }}" class="btn btn-primary">
+                        <i class="fas fa-chart-bar"></i> Peržiūrėti pažymius
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Tvarkaraštis</h5>
+                    <p class="card-text">Peržiūrėkite savo dėstymo tvarkaraštį.</p>
+                    <a href="{{ url_for('teacher.schedule') }}" class="btn btn-primary">
+                        <i class="fas fa-calendar-alt"></i> Peržiūrėti tvarkaraštį
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Profilis</h5>
+                    <p class="card-text">Valdykite savo paskyros informaciją.</p>
+                    <a href="{{ url_for('main.profile') }}" class="btn btn-primary">
+                        <i class="fas fa-user"></i> Peržiūrėti profilį
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

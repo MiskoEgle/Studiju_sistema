@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Moduliai{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Moduliai</h2>
+        </div>
+        {% if current_user.role in ['teacher', 'admin'] %}
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('modules.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Naujas modulis
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Pavadinimas</th>
+                                    <th>Studijų programa</th>
+                                    <th>Kreditai</th>
+                                    <th>Semestras</th>
+                                    <th>Dėstytojas</th>
+                                    {% if current_user.role == 'student' %}
+                                        <th>Statusas</th>
+                                    {% endif %}
+                                    <th>Veiksmai</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for module in modules %}
+                                    <tr>
+                                        <td>{{ module.name }}</td>
+                                        <td>{{ module.study_program.name }}</td>
+                                        <td>{{ module.credits }}</td>
+                                        <td>
+                                            {% if module.semester == 'fall' %}
+                                                Rudens
+                                            {% else %}
+                                                Pavasario
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if module.teacher %}
+                                                {{ module.teacher.first_name }} {{ module.teacher.last_name }}
+                                            {% else %}
+                                                Nepriskirtas
+                                            {% endif %}
+                                        </td>
+                                        {% if current_user.role == 'student' %}
+                                            <td>
+                                                {% if module in current_user.enrolled_modules %}
+                                                    <span class="badge bg-success">Užsiregistruota</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Neregistruota</span>
+                                                {% endif %}
+                                            </td>
+                                        {% endif %}
+                                        <td>
+                                            <a href="{{ url_for('main.module_details', module_id=module.id) }}" 
+                                               class="btn btn-sm btn-info" 
+                                               data-bs-toggle="tooltip" 
+                                               title="Peržiūrėti modulio informaciją">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if current_user.role in ['teacher', 'admin'] %}
+                                                <a href="{{ url_for('modules.edit', id=module.id) }}" 
+                                                   class="btn btn-sm btn-warning" 
+                                                   data-bs-toggle="tooltip" 
+                                                   title="Redaguoti modulį">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{{ url_for('modules.delete', id=module.id) }}" 
+                                                   class="btn btn-sm btn-danger" 
+                                                   data-bs-toggle="tooltip" 
+                                                   title="Ištrinti modulį"
+                                                   onclick="return confirm('Ar tikrai norite ištrinti šį modulį?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %} 
